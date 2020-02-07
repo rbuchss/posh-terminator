@@ -31,6 +31,14 @@
             "colorScheme": "One Half Dark"
         },
         {
+            "guid": "{d4af2193-85d3-4ad5-b500-97611312137d}",
+            "name": ".NET PowerShell 6",
+            "commandline": "%USERPROFILE%/.dotnet/tools/pwsh.exe",
+            "hidden": false,
+            "icon": "ms-appx:///ProfileIcons/{61c54bbd-c2c6-5271-96e7-009a87ff44bf}.png",
+            "colorScheme": "One Half Dark"
+        },
+        {
             // Make changes here to the cmd.exe profile
             "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
             "name": "cmd",
