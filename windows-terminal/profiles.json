@@ -23,7 +23,7 @@
             "cursorShape": "vintage",
             "fontFace": "Consolas",
             "fontSize": 10,
-            "historySize": 9001,
+            "historySize": 10001,
             "snapOnInput": true,
             "startingDirectory": "%USERPROFILE%"
         },
