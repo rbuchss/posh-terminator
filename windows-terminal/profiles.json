@@ -11,6 +11,10 @@
     "$schema": "https://aka.ms/terminal-profiles-schema",
 
     "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+    "copyOnSelect": true,
+    "initialCols": 160,
+    "initialPosition": "0,0",
+    "initialRows": 60,
 
     "profiles": {
         "defaults": {
