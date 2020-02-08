@@ -2,6 +2,11 @@
 // To view the default settings, hold "alt" while clicking on the "Settings" button.
 // For documentation on these settings, see: https://aka.ms/terminal-documentation
 
+// Also see:
+//      https://github.com/microsoft/terminal/blob/master/doc/user-docs/UsingJsonSettings.md
+//      https://github.com/microsoft/terminal/blob/master/doc/cascadia/SettingsSchema.md
+//      https://github.com/microsoft/terminal/tree/master/src/tools/ColorTool
+
 {
     "$schema": "https://aka.ms/terminal-profiles-schema",
 
@@ -67,5 +72,11 @@
 
     // Add any keybinding overrides to this array.
     // To unbind a default keybinding, set the command to "unbound"
-    "keybindings": []
+    "keybindings": [
+        { "command": "copy", "keys": [ "ctrl+c" ] },
+        { "command": "nextTab", "keys": [ "ctrl+alt+right" ] },
+        { "command": "prevTab", "keys": [ "ctrl+alt+left" ] },
+        { "command": { "action": "splitPane", "split": "horizontal" }, "keys": [ "alt+shift+s" ] },
+        { "command": { "action": "splitPane", "split": "vertical"  }, "keys": [ "alt+shift+v" ] }
+    ]
 }
