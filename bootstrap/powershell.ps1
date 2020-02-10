@@ -13,6 +13,10 @@
     cmd /c mklink /d ".\home\.powershell" "..\powershell"
 #>
 
+if ($PSVersionTable.PSVersion.Major -lt 6) {
+  throw "This bootstrap is intended only for PowerShell Core! (PowerShell 6)`nExit and run from there!"
+}
+
 $profilePaths = [ordered]@{
   CurrentUserCurrentHost = @{
     config = (Split-Path $PROFILE.CurrentUserCurrentHost -Parent)
