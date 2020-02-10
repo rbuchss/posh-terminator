@@ -41,6 +41,11 @@ function Update-File {
   }
 }
 
+function Get-Windows-ReleaseId {
+  # [System.Environment]::OSVersion.Version
+  (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").ReleaseId
+}
+
 <# Aliases #>
 
 Set-Alias -Name g -Value git
