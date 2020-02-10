@@ -27,9 +27,24 @@ function Get-CmdletAlias ($cmdletname) {
       Format-Table -Property Definition, Name -AutoSize
 }
 
+function Update-File {
+  # TODO support multiple files?
+  $file = $args[0]
+  if ($null -eq $file) {
+    throw "No filename supplied"
+  }
+
+  if (Test-Path $file) {
+    (Get-ChildItem $file).LastWriteTime = Get-Date
+  } else {
+    New-Item -ItemType file $file
+  }
+}
+
 <# Aliases #>
 
 Set-Alias -Name g -Value git
+Set-Alias -Name touch -Value Update-File
 
 <# Powershell prompt #>
 
