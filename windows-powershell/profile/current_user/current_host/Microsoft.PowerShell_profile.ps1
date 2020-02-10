@@ -1,0 +1,1 @@
+../../../../powershell/profile/current_user/current_host/Microsoft.PowerShell_profile.ps1
