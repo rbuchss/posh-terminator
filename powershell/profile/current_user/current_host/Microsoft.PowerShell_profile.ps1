@@ -41,15 +41,27 @@ function Update-File {
   }
 }
 
-function Get-Windows-ReleaseId {
+function Get-WindowsReleaseId {
   # [System.Environment]::OSVersion.Version
   (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").ReleaseId
+}
+
+function Set-NewLocation {
+  $dir = $args[0]
+
+  if ($null -eq $dir) {
+    throw "No directory name supplied"
+  }
+
+  mkdir $dir
+  Set-Location $dir
 }
 
 <# Aliases #>
 
 Set-Alias -Name g -Value git
 Set-Alias -Name touch -Value Update-File
+Set-Alias -Name mkcd -Value Set-NewLocation
 
 <# Powershell prompt #>
 
