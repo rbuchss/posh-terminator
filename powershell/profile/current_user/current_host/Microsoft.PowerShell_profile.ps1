@@ -28,16 +28,16 @@ function Get-CmdletAlias ($cmdletname) {
 }
 
 function Update-File {
-  # TODO support multiple files?
-  $file = $args[0]
-  if ($null -eq $file) {
-    throw "No filename supplied"
+  if ($args.Count -eq 0) {
+    throw "$($MyInvocation.MyCommand): no arguments supplied`nUsage: $($MyInvocation.MyCommand) <file_0> ... <file_n>"
   }
 
-  if (Test-Path $file) {
-    (Get-ChildItem $file).LastWriteTime = Get-Date
-  } else {
-    New-Item -ItemType file $file
+  foreach ($file in $args) {
+    if (Test-Path $file) {
+      (Get-ChildItem $file).LastWriteTime = Get-Date
+    } else {
+      New-Item -ItemType file $file
+    }
   }
 }
 
