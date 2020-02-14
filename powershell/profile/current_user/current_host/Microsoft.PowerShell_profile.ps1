@@ -47,10 +47,14 @@ function Get-WindowsReleaseId {
 }
 
 function Set-NewLocation {
+  if ($args.Count -gt 1) {
+    throw "$($MyInvocation.MyCommand): multiple arguments supplied`nUsage: $($MyInvocation.MyCommand) <new-directory>"
+  }
+
   $dir = $args[0]
 
   if ($null -eq $dir) {
-    throw "No directory name supplied"
+    throw "$($MyInvocation.MyCommand): No directory name supplied"
   }
 
   mkdir $dir
@@ -67,6 +71,7 @@ function Find-HistoryAllSessions {
   }
 
   $find = $args[0]
+
   if ($null -eq $find) {
     throw "$($MyInvocation.MyCommand): No find pattern supplied"
   }
