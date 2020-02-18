@@ -79,6 +79,20 @@ function Find-HistoryAllSessions {
   Get-HistoryAllSessions | Select-String -Pattern "$find" | Get-Unique
 }
 
+function Start-ProcessAsAdmin {
+  if ($args.Count -eq 0) {
+    throw "$($MyInvocation.MyCommand): no arguments supplied`nUsage: $($MyInvocation.MyCommand) <command> <args>"
+  }
+
+  # requires UAC ...
+  # and does not work with AppxPackages like windows-terminal :(
+  if ($args.Count -eq 1) {
+    Start-Process $args[0] -Verb RunAs
+  } elseif ($args.Count -gt 1) {
+    Start-Process $args[0] -ArgumentList $args[1..$args.Count] -Verb RunAs
+  }
+}
+
 function Get-Assemblies {
   [System.AppDomain]::CurrentDomain.GetAssemblies()
 }
@@ -155,6 +169,7 @@ Set-Alias -Name g -Value git
 Set-Alias -Name touch -Value Update-File
 Set-Alias -Name mkcd -Value Set-NewLocation
 Set-Alias -Name hack -Value Find-HistoryAllSessions
+Set-Alias -Name sudo -Value Start-ProcessAsAdmin
 
 <# Powershell prompt #>
 
