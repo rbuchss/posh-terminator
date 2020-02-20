@@ -163,6 +163,11 @@ function Get-TypeLastUpdateTime {
   ForEach-Object LastWriteTime
 }
 
+function Get-TypeAliases {
+  $tna = [psobject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Get
+  $tna.GetEnumerator() | Sort-Object Key
+}
+
 <# Aliases #>
 
 Set-Alias -Name g -Value git
