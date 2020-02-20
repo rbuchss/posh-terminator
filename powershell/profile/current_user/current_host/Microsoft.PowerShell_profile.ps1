@@ -195,8 +195,8 @@ function global:prompt {
   $prompt = ''
 
   if (Test-Administrator) {
-    $prompt += Write-Prompt("PS:") -ForegroundColor ([ConsoleColor]::Red)
-    $prompt += Write-Prompt("root:") -ForegroundColor ([ConsoleColor]::Magenta)
+    $prompt += Write-Prompt("root:") -ForegroundColor ([ConsoleColor]::DarkGray)
+    $prompt += Write-Prompt("PS") -ForegroundColor ([ConsoleColor]::Red)
   } else {
     $prompt += Write-Prompt("PS") -ForegroundColor ([ConsoleColor]::DarkCyan)
   }
