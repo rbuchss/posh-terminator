@@ -14,6 +14,7 @@ $Env:DOTNET_CLI_TELEMETRY_OPTOUT = $true
 
 # PoshGit settings
 #   https://github.com/dahlbyk/posh-git/blob/master/src/GitPrompt.ps1#L899
+$GitPromptSettings.DefaultPromptPrefix.Text = ''
 $GitPromptSettings.DefaultPromptPath.Text = ''
 $GitPromptSettings.DefaultPromptSuffix.Text = ''
 
