@@ -47,7 +47,39 @@ function Update-File {
 function Set-CDPathLocation {
   [CmdletBinding()]
   param(
-    [Parameter(ValueFromPipelineByPropertyName)]
+    [Parameter(
+      ValueFromPipeline = $true,
+      ValueFromPipelineByPropertyName = $true,
+      Position = 0
+    )]
+    [ArgumentCompleter( {
+      param($commandName,
+        $parameterName,
+        $wordToComplete,
+        $commandAst,
+        $fakeBoundParameters)
+
+      if ($wordToComplete -match '^([a-zA-Z]{1}:|)(\\|/)') {
+        return Find-Subdirectories -Path "$wordToComplete*" -Sanitized
+      }
+
+      if (-not $env:CDPATH) {
+        return Find-Subdirectories -Path . -Pattern "$wordToComplete*" -Relative -Sanitized
+      }
+
+      $results = @()
+
+      Get-CDPaths -Unique | ForEach-Object {
+        if (Test-Path $_) {
+          $result = Find-Subdirectories -Path "$_" -Pattern "$wordToComplete*" -Relative:("$_" -eq '.') -Sanitized
+          if ($result) { $results += $result }
+        }
+      }
+
+      if ($results.count -eq 0) { return '' }
+
+      $results
+    } )]
     [string]$Path
   )
 
@@ -157,33 +189,6 @@ function Test-PathsEqual {
 
   (Get-Item $Path | Resolve-Path).Path -eq (Get-Item $OtherPath | Resolve-Path).Path
 }
-
-$setCDPathLocationBlock = {
-  param($commandName, $parameterName, $stringMatch)
-
-  if ($stringMatch -match '^([a-zA-Z]{1}:|)(\\|/)') {
-    return Find-Subdirectories -Path "$stringMatch*" -Sanitized
-  }
-
-  if (-not $env:CDPATH) {
-    return Find-Subdirectories -Path . -Pattern "$stringMatch*" -Relative -Sanitized
-  }
-
-  $results = @()
-
-  Get-CDPaths -Unique | ForEach-Object {
-    if (Test-Path $_) {
-      $result = Find-Subdirectories -Path "$_" -Pattern "$stringMatch*" -Relative:("$_" -eq '.') -Sanitized
-      if ($result) { $results += $result }
-    }
-  }
-
-  if ($results.count -eq 0) { return '' }
-
-  $results
-}
-
-Register-ArgumentCompleter -CommandName Set-CDPathLocation -ParameterName Path -ScriptBlock $setCDPathLocationBlock
 
 function Get-WindowsReleaseId {
   # [System.Environment]::OSVersion.Version
@@ -319,7 +324,13 @@ Set-Alias -Name touch -Value Update-File
 Set-Alias -Name mkcd -Value Set-NewLocation
 Set-Alias -Name hack -Value Find-HistoryAllSessions
 Set-Alias -Name sudo -Value Start-ProcessAsAdmin
-set-alias -Name cd2 -value Set-CDPathLocation
+<#
+  TODO: find how to make this work:
+    remapping cd from Set-Location to Set-CDPathLocation
+    breaks the argument completer for some reason ...
+#>
+# set-alias -Name cd -value Set-CDPathLocation -Option AllScope
+set-alias -Name cdd -value Set-CDPathLocation
 
 <# Powershell prompt #>
 
