@@ -9,6 +9,8 @@ Import-Module posh-git
 
 <# Enviroment Vars #>
 
+$env:CDPATH = '.;C:\opt\sagittarius\vango;~\.homesick\repos;~\'
+
 # dotnet settings
 $Env:DOTNET_CLI_TELEMETRY_OPTOUT = $true
 
@@ -41,6 +43,147 @@ function Update-File {
     }
   }
 }
+
+function Set-CDPathLocation {
+  [CmdletBinding()]
+  param(
+    [Parameter(ValueFromPipelineByPropertyName)]
+    [string]$Path
+  )
+
+  if (-not $Path) {
+    Set-Location $env:HOME
+    return
+  }
+
+  if (($Path -eq '-') -or ($Path -eq '+') -or (Test-Path $Path) -or (-not $env:CDPATH)) {
+    Set-Location $Path
+    return
+  }
+
+  $validChangePath = $null
+
+  foreach ($cdPath in Get-CDPaths -Unique) {
+    $changePath = Join-Path $cdPath $Path
+
+    if (Test-Path $changePath) {
+      $validChangePath = $changePath
+      break
+    }
+  }
+
+  if ($validChangePath) {
+    Set-Location $validChangePath
+    return
+  }
+
+  Set-Location $Path
+}
+
+function Get-CDPaths {
+  [CmdletBinding()]
+  param (
+    [Parameter()]
+    [switch]$Unique
+  )
+
+  if (-not $env:CDPATH) { return @() }
+
+  $paths = $env:CDPATH.split(';') | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) }
+
+  if (-not $Unique) { return $paths }
+
+  $results = [ordered]@{ }
+
+  $paths | ForEach-Object {
+    $resolvedPath = (Get-Item $_ | Resolve-Path).Path
+
+    if (-not $results[$resolvedPath]) {
+      $results[$resolvedPath] = $_
+    }
+  }
+
+  $results.Values
+}
+
+function Find-Subdirectories {
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory)]
+    [string]$Path,
+
+    [string]$Pattern,
+
+    [switch]$Relative,
+
+    [switch]$Sanitized
+  )
+
+  $matchedDirs = if ($Pattern) {
+    Get-ChildItem "$Path\$Pattern" -Directory
+  } else {
+    Get-ChildItem "$Path" -Directory
+  }
+
+  if (-not $matchedDirs) { return $null }
+
+  $results = if ($Relative) {
+    $matchedDirs | Resolve-Path -Relative
+  } else {
+    $matchedDirs | Select-Object -ExpandProperty FullName
+  }
+
+  if (-not $Sanitized) { return $results }
+
+  $results | ForEach-Object {
+    $tmp = $_ -replace "^(?!\.\\|[a-zA-Z]:\\)", ".\" -replace '$', '\'
+    if ($tmp -match '\s') {
+      $tmp -replace '^(.+)$', "'$tmp'"
+    } else {
+      $tmp
+    }
+  }
+}
+
+function Test-PathsEqual {
+  [CmdletBinding()]
+  param (
+    [Parameter(Mandatory)]
+    $Path,
+
+    [Parameter(Mandatory)]
+    $OtherPath
+  )
+
+  (Get-Item $Path | Resolve-Path).Path -eq (Get-Item $OtherPath | Resolve-Path).Path
+}
+
+$setCDPathLocationBlock = {
+  param($commandName, $parameterName, $stringMatch)
+
+  if ($stringMatch -match '^([a-zA-Z]{1}:|)(\\|/)') {
+    return Find-Subdirectories -Path "$stringMatch*" -Sanitized
+  }
+
+  if (-not $env:CDPATH) {
+    return Find-Subdirectories -Path . -Pattern "$stringMatch*" -Relative -Sanitized
+  }
+
+  $results = @()
+
+  Get-CDPaths -Unique | ForEach-Object {
+    if (Test-Path $_) {
+      $result = Find-Subdirectories -Path "$_" -Pattern "$stringMatch*" -Relative:("$_" -eq '.') -Sanitized
+      if ($result) { $results += $result }
+    }
+  }
+
+  if ($results.count -eq 0) { return '' }
+
+  $results
+}
+
+Register-ArgumentCompleter -CommandName Set-CDPathLocation -ParameterName Path -ScriptBlock $setCDPathLocationBlock
 
 function Get-WindowsReleaseId {
   # [System.Environment]::OSVersion.Version
@@ -176,6 +319,7 @@ Set-Alias -Name touch -Value Update-File
 Set-Alias -Name mkcd -Value Set-NewLocation
 Set-Alias -Name hack -Value Find-HistoryAllSessions
 Set-Alias -Name sudo -Value Start-ProcessAsAdmin
+set-alias -Name cd2 -value Set-CDPathLocation
 
 <# Powershell prompt #>
 
