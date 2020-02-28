@@ -20,6 +20,12 @@ $GitPromptSettings.DefaultPromptPrefix.Text = ''
 $GitPromptSettings.DefaultPromptPath.Text = ''
 $GitPromptSettings.DefaultPromptSuffix.Text = ''
 
+<# Key Bindings #>
+
+# Bash like chords for backward/forward line deletion
+Set-PSReadlineKeyHandler -Chord Ctrl+u -Function BackwardDeleteLine
+Set-PSReadlineKeyHandler -Chord Ctrl+k -Function ForwardDeleteLine
+
 <# Helper functions #>
 
 function Pro { code $PROFILE }
