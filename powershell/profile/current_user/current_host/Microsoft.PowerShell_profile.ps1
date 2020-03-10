@@ -9,7 +9,7 @@ Import-Module posh-git
 
 <# Enviroment Vars #>
 
-$env:CDPATH = '.;C:\opt\sagittarius\vango;~\.homesick\repos;~\'
+$env:CDPATH = '.;C:\opt\sagittarius\vango;C:\opt\sagittarius;~\.homesick\repos;~\'
 
 # dotnet settings
 $Env:DOTNET_CLI_TELEMETRY_OPTOUT = $true
