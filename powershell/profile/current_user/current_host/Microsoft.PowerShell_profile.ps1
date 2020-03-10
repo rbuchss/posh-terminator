@@ -331,11 +331,11 @@ function Get-TypeAliases {
   Resolves long standing bug of powershell classes
   not being overwritten in the cache for a given session
 #>
-function Invoke-CleanPester {
+function Invoke-PesterClean {
   $engine = (Get-Process -id $pid | Get-Item)
   switch ($engine.Name) {
-    'pwh.exe' { pwsh.exe { Invoke-Pester } }
-    'powershell.exe' { powershell.exe {Invoke-Pester } }
+    'pwsh.exe' { pwsh.exe { Invoke-Pester } }
+    'powershell.exe' { powershell.exe { Invoke-Pester } }
     default { throw "$($MyInvocation.MyCommand): process engine: '$_' for Invoke-Pester not supported!" }
   }
 }
@@ -364,7 +364,7 @@ Set-Alias -Name sudo -Value Start-ProcessAsAdmin
 #>
 # set-alias -Name cd -value Set-CDPathLocation -Option AllScope
 set-alias -Name cdd -value Set-CDPathLocation
-set-alias -Name pester -value Invoke-CleanPester
+set-alias -Name pester -value Invoke-PesterClean
 
 <# Powershell prompt #>
 
