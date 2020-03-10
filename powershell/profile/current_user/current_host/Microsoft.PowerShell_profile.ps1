@@ -26,6 +26,10 @@ $GitPromptSettings.DefaultPromptSuffix.Text = ''
 Set-PSReadlineKeyHandler -Chord Ctrl+u -Function BackwardDeleteLine
 Set-PSReadlineKeyHandler -Chord Ctrl+k -Function ForwardDeleteLine
 
+<# Readline Options #>
+
+Set-PSReadLineOption -BellStyle None
+
 <# Helper functions #>
 
 function Pro { code $PROFILE }
