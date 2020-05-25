@@ -25,6 +25,8 @@ $GitPromptSettings.DefaultPromptSuffix.Text = ''
 # Bash like chords for backward/forward line deletion
 Set-PSReadlineKeyHandler -Chord Ctrl+u -Function BackwardDeleteLine
 Set-PSReadlineKeyHandler -Chord Ctrl+k -Function ForwardDeleteLine
+Set-PSReadlineKeyHandler -Chord Ctrl+LeftArrow -Function BackwardWord
+Set-PSReadlineKeyHandler -Chord Ctrl+RightArrow -Function ForwardWord
 
 <# Readline Options #>
 
