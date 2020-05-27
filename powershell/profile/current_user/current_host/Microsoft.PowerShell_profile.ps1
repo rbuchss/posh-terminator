@@ -388,8 +388,8 @@ set-alias -Name pester -value Invoke-PesterClean
 <# Powershell prompt #>
 
 function Test-IsWindows {
-  $IsLinuxEnv = (Get-Variable -Name "IsLinux" -ErrorAction Ignore) -and $IsLinux
-  $IsMacOSEnv = (Get-Variable -Name "IsMacOS" -ErrorAction Ignore) -and $IsMacOS
+  $IsLinuxEnv = (Get-Variable -Name 'IsLinux' -ErrorAction Ignore) -and $IsLinux
+  $IsMacOSEnv = (Get-Variable -Name 'IsMacOS' -ErrorAction Ignore) -and $IsMacOS
   $IsWinEnv = !$IsLinuxEnv -and !$IsMacOSEnv
   return $IsWinEnv
 }
@@ -404,21 +404,21 @@ function global:prompt {
   $prompt = ''
 
   if (Test-Administrator) {
-    $prompt += Write-Prompt("root:") -ForegroundColor ([ConsoleColor]::DarkGray)
-    $prompt += Write-Prompt("PS") -ForegroundColor ([ConsoleColor]::Red)
+    $prompt += Write-Prompt('root:') -ForegroundColor ([byte]8)
+    $prompt += Write-Prompt('PS') -ForegroundColor ([byte]9)
   } else {
-    $prompt += Write-Prompt("PS") -ForegroundColor ([ConsoleColor]::DarkCyan)
+    $prompt += Write-Prompt('PS') -ForegroundColor ([byte]81)
   }
 
-  $prompt += Write-Prompt([char]0x222B) -ForegroundColor ([ConsoleColor]::Yellow)
-  $prompt += Write-Prompt([Environment]::UserName) -ForegroundColor ([ConsoleColor]::Blue)
-  $prompt += Write-Prompt("@") -ForegroundColor ([ConsoleColor]::Blue)
-  $prompt += Write-Prompt([Environment]::MachineName.ToLower()) -ForegroundColor ([ConsoleColor]::Red)
-  $prompt += Write-Prompt(" ")
-  $prompt += Write-Prompt($pwd -Replace ($HOME).Replace('\', '\\'), '~') -ForegroundColor ([ConsoleColor]::Yellow)
+  $prompt += Write-Prompt([char]0x222B) -ForegroundColor ([byte]186)
+  $prompt += Write-Prompt([Environment]::UserName) -ForegroundColor ([byte]69)
+  $prompt += Write-Prompt("@") -ForegroundColor ([byte]69)
+  $prompt += Write-Prompt([Environment]::MachineName.ToLower()) -ForegroundColor ([byte]9)
+  $prompt += Write-Prompt(' ')
+  $prompt += Write-Prompt($pwd -Replace ($HOME).Replace('\', '\\'), '~') -ForegroundColor ([byte]186)
   $prompt += & $GitPromptScriptBlock  # PoshGit
   $prompt += Write-Prompt "`n"
-  $prompt += Write-Prompt([char]0x03BB) -ForegroundColor ([ConsoleColor]::Yellow)
+  $prompt += Write-Prompt([char]0x03BB) -ForegroundColor ([byte]186)
 
-  if ($prompt) { "$prompt " } else { " " }
+  if ($prompt) { "$prompt " } else { ' ' }
 }
