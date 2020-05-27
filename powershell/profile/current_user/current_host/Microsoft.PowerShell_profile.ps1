@@ -15,7 +15,20 @@ $env:CDPATH = '.;C:\opt\sagittarius\vango;C:\opt\sagittarius;~\.homesick\repos;~
 $Env:DOTNET_CLI_TELEMETRY_OPTOUT = $true
 
 # PoshGit settings
-#   https://github.com/dahlbyk/posh-git/blob/master/src/GitPrompt.ps1#L899
+$GitPromptSettings.BranchColor.ForegroundColor = [byte]69
+$GitPromptSettings.IndexColor.ForegroundColor = [byte]10
+$GitPromptSettings.WorkingColor.ForegroundColor = [byte]9
+$GitPromptSettings.StashColor.ForegroundColor = [byte]214
+$GitPromptSettings.BeforeStatus.Text = '[ '
+$GitPromptSettings.BeforeStatus.ForegroundColor = [byte]8
+$GitPromptSettings.AfterStatus.Text = ' ]'
+$GitPromptSettings.AfterStatus.ForegroundColor = [byte]8
+$GitPromptSettings.BeforeStash.Text = ' #'
+$GitPromptSettings.BeforeStash.ForegroundColor = [byte]214
+$GitPromptSettings.AfterStash.Text = ''
+$GitPromptSettings.LocalWorkingStatusSymbol.Text = ''
+$GitPromptSettings.LocalStagedStatusSymbol.Text = ''
+$GitPromptSettings.EnableStashStatus = $true
 $GitPromptSettings.DefaultPromptPrefix.Text = ''
 $GitPromptSettings.DefaultPromptPath.Text = ''
 $GitPromptSettings.DefaultPromptSuffix.Text = ''
