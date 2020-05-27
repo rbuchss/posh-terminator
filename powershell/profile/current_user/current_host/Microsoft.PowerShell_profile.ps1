@@ -219,7 +219,17 @@ function Test-PathsEqual {
   (Get-Item $Path | Resolve-Path).Path -eq (Get-Item $OtherPath | Resolve-Path).Path
 }
 
+function Test-IsWindows {
+  $IsLinuxEnv = (Get-Variable -Name 'IsLinux' -ErrorAction Ignore) -and $IsLinux
+  $IsMacOSEnv = (Get-Variable -Name 'IsMacOS' -ErrorAction Ignore) -and $IsMacOS
+  return (-not $IsLinuxEnv -and -not $IsMacOSEnv)
+}
+
 function Get-WindowsReleaseId {
+  if (-not (Test-IsWindows)) {
+    throw "$($MyInvocation.MyCommand): OS is not supported; windows only!"
+  }
+
   # [System.Environment]::OSVersion.Version
   (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").ReleaseId
 }
@@ -342,7 +352,7 @@ function Get-TypeLastUpdateTime {
 }
 
 function Get-TypeAliases {
-  $tna = [psobject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Get
+  $tna = [PSObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Get
   $tna.GetEnumerator() | Sort-Object Key
 }
 
@@ -351,6 +361,7 @@ function Get-TypeAliases {
   not being overwritten in the cache for a given session
 #>
 function Invoke-PesterClean {
+  # TODO add passthru flags
   $engine = (Get-Process -id $pid | Get-Item)
   switch ($engine.Name) {
     'pwsh.exe' { pwsh.exe { Invoke-Pester } }
@@ -381,44 +392,88 @@ Set-Alias -Name sudo -Value Start-ProcessAsAdmin
     remapping cd from Set-Location to Set-CDPathLocation
     breaks the argument completer for some reason ...
 #>
-# set-alias -Name cd -value Set-CDPathLocation -Option AllScope
-set-alias -Name cdd -value Set-CDPathLocation
-set-alias -Name pester -value Invoke-PesterClean
+# Set-Alias -Name cd -Value Set-CDPathLocation -Option AllScope
+Set-Alias -Name cdd -Value Set-CDPathLocation
+Set-Alias -Name pester -Value Invoke-PesterClean
 
 <# Powershell prompt #>
 
-function Test-IsWindows {
-  $IsLinuxEnv = (Get-Variable -Name 'IsLinux' -ErrorAction Ignore) -and $IsLinux
-  $IsMacOSEnv = (Get-Variable -Name 'IsMacOS' -ErrorAction Ignore) -and $IsMacOS
-  $IsWinEnv = !$IsLinuxEnv -and !$IsMacOSEnv
-  return $IsWinEnv
+$PromptStyle = @{
+  PoshSymbol = 'PS'
+  PoshSymbolColor = [byte]81
+  PoshSeparator = [char]0x222B
+  PoshSeparatorColor = [byte]186
+  UserName = [Environment]::UserName
+  UserColor = [byte]69
+  UserSeparator = '@'
+  UserSeparatorColor = [byte]69
+  HostName = [Environment]::MachineName.ToLower()
+  HostColor = [byte]9
+  PathColor = [byte]186
+  CommandSymbol = [char]0x03BB
+  CommandSymbolColor = [byte]186
+  ErrorSymbol = [char]0x2718
+  ErrorSymbolColor = [byte]9
 }
 
-function Test-Administrator {
-  if (-not (Test-IsWindows)) { return $false }
-  $user = [Security.Principal.WindowsIdentity]::GetCurrent();
-  (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
-}
+$AdminPromptStyle = $PromptStyle.Clone()
+$AdminPromptStyle.PoshSymbolColor = [byte]9
+$AdminPromptStyle.PoshSeparatorColor = [byte]8
+$AdminPromptStyle.UserName = 'root'
+$AdminPromptStyle.UserColor = [byte]9
+$AdminPromptStyle.UserSeparator = '#'
+$AdminPromptStyle.UserSeparatorColor = [byte]9
+$AdminPromptStyle.HostColor = [byte]12
+$AdminPromptStyle.PathColor = [byte]12
 
-function global:prompt {
-  $prompt = ''
-
-  if (Test-Administrator) {
-    $prompt += Write-Prompt('root:') -ForegroundColor ([byte]8)
-    $prompt += Write-Prompt('PS') -ForegroundColor ([byte]9)
+function prompt {
+  $lastCommandStatus = $?
+  $style = if (Test-IsAdministrator) {
+    $AdminPromptStyle
   } else {
-    $prompt += Write-Prompt('PS') -ForegroundColor ([byte]81)
+    $PromptStyle
   }
 
-  $prompt += Write-Prompt([char]0x222B) -ForegroundColor ([byte]186)
-  $prompt += Write-Prompt([Environment]::UserName) -ForegroundColor ([byte]69)
-  $prompt += Write-Prompt("@") -ForegroundColor ([byte]69)
-  $prompt += Write-Prompt([Environment]::MachineName.ToLower()) -ForegroundColor ([byte]9)
-  $prompt += Write-Prompt(' ')
-  $prompt += Write-Prompt($pwd -Replace ($HOME).Replace('\', '\\'), '~') -ForegroundColor ([byte]186)
-  $prompt += & $GitPromptScriptBlock  # PoshGit
-  $prompt += Write-Prompt "`n"
-  $prompt += Write-Prompt([char]0x03BB) -ForegroundColor ([byte]186)
+  Format-Prompt -Style $style -Success $lastCommandStatus
+}
 
-  if ($prompt) { "$prompt " } else { ' ' }
+function Test-IsAdministrator {
+  # PowerShell 5.x only runs on Windows so use .NET types to determine isAdminProcess
+  # Or if we are on v6 or higher, check the $IsWindows pre-defined variable.
+  if (($PSVersionTable.PSVersion.Major -le 5) -or $IsWindows) {
+    $currentUser = [Security.Principal.WindowsPrincipal]([Security.Principal.WindowsIdentity]::GetCurrent())
+    return $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+  }
+
+  # Must be Linux or OSX, so use the id util. Root has userid of 0.
+  return 0 -eq (id -u)
+}
+
+function Format-Prompt {
+  param([hashtable] $Style, [bool] $Success)
+
+  "{0}{1}{2}{3}{4}{5} {6}{7}`n{8} " -f `
+    (Format-ErrorPrompt -Style $Style -Success $Success),
+    (Write-Prompt $Style.PoshSymbol -ForegroundColor $Style.PoshSymbolColor),
+    (Write-Prompt $Style.PoshSeparator -ForegroundColor $Style.PoshSeparatorColor),
+    (Write-Prompt $Style.UserName -ForegroundColor $Style.UserColor),
+    (Write-Prompt $Style.UserSeparator -ForegroundColor $Style.UserSeparatorColor),
+    (Write-Prompt $Style.HostName -ForegroundColor $Style.HostColor),
+    (Write-Prompt (Get-CurrentPromptPath) -ForegroundColor $Style.PathColor),
+    (& $GitPromptScriptBlock),
+    (Write-Prompt $Style.CommandSymbol -ForegroundColor $Style.CommandSymbolColor)
+}
+
+function Format-ErrorPrompt {
+  param([hashtable] $Style, [bool] $Success)
+
+  if ($Success) {
+    return ''
+  }
+
+  '{0} ' -f (Write-Prompt $Style.ErrorSymbol -ForegroundColor $Style.ErrorSymbolColor)
+}
+
+function Get-CurrentPromptPath {
+  $PWD -Replace $HOME.Replace('\', '\\'), '~'
 }
