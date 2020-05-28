@@ -1,3 +1,3 @@
-windows-terminator
+posh-terminator
 ==========
-Tis my windows "dot"-profile
+Tis my [posh-homesick](https://github.com/rbuchss/posh-homesick) powershell dot-profile
