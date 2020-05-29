@@ -73,4 +73,4 @@ Set-Alias -Name sudo -Value Start-ProcessAsAdmin
 #>
 # Set-Alias -Name cd -Value Set-CDPathLocation -Option AllScope
 Set-Alias -Name cdd -Value Set-CDPathLocation
-Set-Alias -Name pester -Value Invoke-PesterClean
+Set-Alias -Name pester -Value Invoke-PesterInCleanSession
