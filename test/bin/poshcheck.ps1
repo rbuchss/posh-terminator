@@ -1,9 +1,13 @@
-#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh -NoProfile -NonInteractive -NoLogo
 
 $format = @{Expression={$_.Location}; Label="In"},
   @{Expression={$_.Context}; Label="Line"},
   @{Expression={$_.Rule}; Label="Rule"},
   @{Expression={$_.Message}; Label="Message"}
+
+$settings = Join-Path -Path $PSScriptRoot `
+  -ChildPath '..' `
+  -AdditionalChildPath 'PSScriptAnalyzerSettings.psd1'
 
 $ESC = [char]0x1B
 
@@ -30,7 +34,8 @@ $report = @{
 }
 
 foreach ($file in $args) {
-  $failures = Invoke-ScriptAnalyzer -Path $file | Sort-Object Line, Column
+  $failures = Invoke-ScriptAnalyzer -Path $file -Settings $settings `
+    | Sort-Object Line, Column
 
   if ($failures.Count -eq 0) {
     continue

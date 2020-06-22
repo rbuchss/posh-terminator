@@ -1,92 +1,97 @@
 #!/usr/bin/env pwsh
 
+using namespace System.Diagnostics.CodeAnalysis
+
 function Set-CDPathLocation {
-  [CmdletBinding()]
+  [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Low')]
   param(
     [Parameter(
       ValueFromPipeline = $true,
       ValueFromPipelineByPropertyName = $true,
       Position = 0
     )]
-    [ArgumentCompleter( {
-      param($commandName,
-        $parameterName,
-        $wordToComplete,
-        $commandAst,
-        $fakeBoundParameters)
+    [ArgumentCompleter({ Complete-CDPathLocation @args })]
+    [string] $Path,
+    [switch] $PassThru,
+    [switch] $Force
+  )
 
-      if ($wordToComplete -match '^([a-zA-Z]{1}:|)(\\|/)') {
-        return Find-Subdirectories -Path "$wordToComplete*" -Sanitized
-      }
+  process {
+    if ($null -ne $Path `
+        -and $Path -match "^'(?<bare>.+)'$") {
+      $Path = $matches.bare
+    }
 
-      if (-not $env:CDPATH) {
-        return Find-Subdirectories -Path . -Pattern "$wordToComplete*" -Relative -Sanitized
-      }
+    $location = if (-not $Path) {
+      $HOME
+    } elseif (($Path -eq '-') `
+        -or ($Path -eq '+') `
+        -or (Test-Path $Path) `
+        -or (-not (Get-CDPathVariable))) {
+      $Path
+    } else {
+      $validatedPath = $null
 
-      $results = @()
+      foreach ($directory in Get-CDPaths -Unique) {
+        $subdirectory = Join-Path -Path $directory -ChildPath $Path
 
-      Get-CDPaths -Unique | ForEach-Object {
-        if (Test-Path $_) {
-          $result = Find-Subdirectories -Path "$_" -Pattern "$wordToComplete*" -Relative:("$_" -eq '.') -Sanitized
-          if ($result) { $results += $result }
+        if (Test-Path $subdirectory) {
+          $validatedPath = $subdirectory
+          break
         }
       }
 
-      if ($results.count -eq 0) { return '' }
-
-      $results
-    } )]
-    [string]$Path
-  )
-
-  if (-not $Path) {
-    Set-Location $env:HOME
-    return
-  }
-
-  if (($Path -eq '-') -or ($Path -eq '+') -or (Test-Path $Path) -or (-not $env:CDPATH)) {
-    Set-Location $Path
-    return
-  }
-
-  $validChangePath = $null
-
-  foreach ($cdPath in Get-CDPaths -Unique) {
-    $changePath = Join-Path $cdPath $Path
-
-    if (Test-Path $changePath) {
-      $validChangePath = $changePath
-      break
+      if ($validatedPath) {
+        $validatedPath
+      } else {
+        $Path
+      }
     }
   }
 
-  if ($validChangePath) {
-    Set-Location $validChangePath
-    return
-  }
+  end {
+    if ($Force -and -not $Confirm){
+      $ConfirmPreference = 'None'
+    }
 
-  Set-Location $Path
+    if ($PSCmdlet.ShouldProcess($location, 'Set-Location')) {
+      try {
+        $location = Set-Location -Path $location -PassThru -ErrorAction Stop
+
+        if ($PassThru) {
+          $location
+        } else {
+          Write-Output $location.Path
+        }
+      } catch {
+        $PSCmdlet.WriteError($_)
+      }
+    }
+  }
+}
+
+function Get-CDPathVariable {
+  $env:CDPATH
 }
 
 function Get-CDPaths {
-  [CmdletBinding()]
-  param (
-    [Parameter()]
-    [switch]$Unique
-  )
+  [OutputType([string[]])]
+  param([switch] $Unique)
 
-  if (-not $env:CDPATH) { return @() }
+  if (-not (Get-CDPathVariable)) { return @() }
 
-  $paths = $env:CDPATH.split(';') | ForEach-Object { $ExecutionContext.InvokeCommand.ExpandString($_) }
+  $paths = (Get-CDPathVariable).split(';') | ForEach-Object {
+    $ExecutionContext.InvokeCommand.ExpandString($_)
+  }
 
   if (-not $Unique) { return $paths }
 
-  $results = [ordered]@{ }
+  $results = [ordered]@{}
 
   $paths | ForEach-Object {
     $resolvedPath = (Get-Item $_ | Resolve-Path).Path
 
-    if (-not $results[$resolvedPath]) {
+    if (-not $results.Contains($resolvedPath)) {
       $results[$resolvedPath] = $_
     }
   }
@@ -96,39 +101,113 @@ function Get-CDPaths {
 
 function Find-Subdirectories {
   [CmdletBinding()]
+  [OutputType([System.IO.DirectoryInfo])]
+  [SuppressMessage('PSReviewUnusedParameter', 'FullName')]
   param(
-    [Parameter(Mandatory)]
-    [string]$Path,
-
-    [string]$Pattern,
-
-    [switch]$Relative,
-
-    [switch]$Sanitized
+    [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+    [string[]] $Path,
+    [string] $Pattern,
+    [switch] $FullName
   )
 
-  $matchedDirs = if ($Pattern) {
-    Get-ChildItem "$Path\$Pattern" -Directory
-  } else {
-    Get-ChildItem "$Path" -Directory
+  begin {
+    $output = @()
+
+    if ($Pattern -match "^'(?<bare>.+)'$") {
+      $Pattern = $matches.bare
+    }
+
+    $basePath = if (-not [string]::IsNullOrEmpty($Pattern)) {
+      Split-Path -Path "$Pattern*" -Parent
+    }
   }
 
-  if (-not $matchedDirs) { return $null }
+  process {
+    # loop required here for non-pipeline input
+    foreach ($directory in $Path) {
+      $output += if ([string]::IsNullOrEmpty($Pattern)) {
+        if ($directory -match "^'(?<bare>.+)'$") {
+          $directory = $matches.bare
+        }
 
-  $results = if ($Relative) {
-    $matchedDirs | Resolve-Path -Relative
-  } else {
-    $matchedDirs | Select-Object -ExpandProperty FullName
+        $basePath = Split-Path -Path "$directory*" -Parent
+
+        @(Get-ChildItem -Path "$directory*" -Directory -ErrorAction Ignore -Force | ForEach-Object {
+          $completionText = if (-not [string]::IsNullOrEmpty($basePath)) {
+            Join-Path -Path $basePath -ChildPath $_.Name
+          }
+          $_ | Add-Member -NotePropertyName PathCompletionText -NotePropertyValue $completionText -PassThru
+        })
+      } else {
+        $searchPath = Join-Path -Path $directory -ChildPath "$Pattern*"
+        @(Get-ChildItem -Path $searchPath -Directory -ErrorAction Ignore -Force)
+      }
+    }
   }
 
-  if (-not $Sanitized) { return $results }
+  end {
+    if ($output.Count -eq 0) { return $null }
+
+    $output | ForEach-Object {
+      $completionText = if ($FullName) {
+        $_.FullName
+      } elseif ([string]::IsNullOrEmpty($Pattern) `
+          -and -not [string]::IsNullOrEmpty($_.PathCompletionText)) {
+        $_.PathCompletionText
+      } elseif (-not [string]::IsNullOrEmpty($basePath)) {
+        Join-Path -Path $basePath -ChildPath $_.Name
+      } else {
+        $_.Name
+      }
+
+      $completionText = Join-Path -Path $completionText -ChildPath ''
+
+      if ($completionText -match '\s') {
+        $completionText = "'$completionText'"
+      }
+
+      $_ `
+        | Add-Member -NotePropertyName CompletionText -NotePropertyValue $completionText -PassThru `
+        | Add-Member -NotePropertyName ListItemText -NotePropertyValue $_.Name -PassThru `
+        | Add-Member -NotePropertyName ToolTip -NotePropertyValue $_.FullName -PassThru
+    }
+  }
+}
+
+function Complete-CDPathLocation {
+  [OutputType([System.Management.Automation.CompletionResult])]
+  [SuppressMessage('PSReviewUnusedParameter', 'CommandName')]
+  [SuppressMessage('PSReviewUnusedParameter', 'ParameterName')]
+  [SuppressMessage('PSReviewUnusedParameter', 'CommandAst')]
+  [SuppressMessage('PSReviewUnusedParameter', 'FakeBoundParameters')]
+  param(
+    $CommandName,
+    $ParameterName,
+    $WordToComplete,
+    $CommandAst,
+    $FakeBoundParameters
+  )
+
+  $results = if ($WordToComplete -match "^(')?([a-zA-Z]{1}:|~)?(\\|/)") {
+    Find-Subdirectories -Path "$WordToComplete" -FullName
+  } elseif (-not (Get-CDPathVariable) `
+        -or $WordToComplete -match "^(')?\.{1,2}(\\|/)") {
+    Find-Subdirectories -Path . -Pattern "$WordToComplete"
+  } else {
+    Get-CDPaths -Unique `
+      | Find-Subdirectories -Pattern "$WordToComplete"
+  }
+
+  if ($null -eq $results) {
+    return $WordToComplete
+  }
 
   $results | ForEach-Object {
-    $tmp = $_ -replace "^(?!\.\\|[a-zA-Z]:\\)", ".\" -replace '$', '\'
-    if ($tmp -match '\s') {
-      $tmp -replace '^(.+)$', "'$tmp'"
-    } else {
-      $tmp
-    }
+    [System.Management.Automation.CompletionResult]::new(
+      $_.CompletionText,
+      $_.ListItemText,
+      'ParameterValue',
+      $_.ToolTip
+    )
   }
 }

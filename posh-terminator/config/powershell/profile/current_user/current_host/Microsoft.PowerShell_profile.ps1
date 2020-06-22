@@ -5,11 +5,17 @@
     https://www.howtogeek.com/50236/customizing-your-powershell-profile/
 #>
 
+using namespace System.Diagnostics.CodeAnalysis
+
 Import-Module $HOME/.posh-terminator/posh-terminator.psd1
 
 <# Enviroment Vars #>
 
-$env:CDPATH = '.;C:\opt\sagittarius\vango;C:\opt\sagittarius;~\.homesick\repos;~\'
+$env:CDPATH = if (Test-IsWindows) {
+  '.;C:\opt\sagittarius\vango;C:\opt\sagittarius;~\.homesick\repos;~\'
+} else {
+  '.;/opt/sagittarius/vango;/opt/sagittarius;~/.homesick/repos;~/'
+}
 
 # dotnet settings
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = $true
@@ -33,19 +39,39 @@ $GitPromptSettings.DefaultPromptPrefix.Text = ''
 $GitPromptSettings.DefaultPromptPath.Text = ''
 $GitPromptSettings.DefaultPromptSuffix.Text = ''
 
+<#
+  Remove overwritten AllScope aliases
+  and flush PSReadLine cache
+  to fix ArgumentCompleter issues
+  see:
+    https://github.com/PowerShell/PowerShell/issues/12165
+    https://github.com/PowerShell/PSReadLine/issues/453#issuecomment-341629310
+#>
+
+Remove-Alias cd
+
+if (Get-Module PSReadLine) {
+  Remove-Module -Force PsReadLine
+  Import-Module -Force PSReadLine
+}
+
 <# Key Bindings #>
 
 # Bash like chords for backward/forward line deletion
-Set-PSReadlineKeyHandler -Chord Ctrl+u -Function BackwardDeleteLine
-Set-PSReadlineKeyHandler -Chord Ctrl+k -Function ForwardDeleteLine
+Set-PSReadLineKeyHandler -Chord Ctrl+u -Function BackwardDeleteLine
+Set-PSReadLineKeyHandler -Chord Ctrl+k -Function ForwardDeleteLine
 
-Set-PSReadlineKeyHandler -Chord Ctrl+LeftArrow -Function BackwardWord
-Set-PSReadlineKeyHandler -Chord Ctrl+RightArrow -Function ForwardWord
+Set-PSReadLineKeyHandler -Chord Ctrl+LeftArrow -Function BackwardWord
+Set-PSReadLineKeyHandler -Chord Ctrl+RightArrow -Function ForwardWord
 
 # Bash like exit
 Set-PSReadLineKeyHandler -Chord Ctrl+d -Function DeleteCharOrExit
 
-<# Readline Options #>
+# Bash like tab completion
+Set-PSReadLineKeyHandler -Chord Tab -Function Complete
+Set-PSReadLineKeyHandler -Chord Shift+Tab -Function MenuComplete
+
+<# ReadLine Options #>
 
 Set-PSReadLineOption -BellStyle None
 
@@ -53,8 +79,15 @@ Set-PSReadLineOption -BellStyle None
 
 # PowerShell parameter completion shim for the dotnet CLI
 Register-ArgumentCompleter -Native -CommandName dotnet -ScriptBlock {
-  param($commandName, $wordToComplete, $cursorPosition)
-  dotnet complete --position $cursorPosition "$wordToComplete" | ForEach-Object {
+  Complete-DotnetCommand @args
+}
+
+# NOTE: PSScriptAnalyzer SuppressMessage does not work in bare block
+# need to move this to a function to suppress
+function Complete-DotnetCommand {
+  [SuppressMessage('PSReviewUnusedParameter', 'wordToComplete')]
+  param($wordToComplete, $commandAst, $cursorPosition)
+  dotnet complete --position $cursorPosition $commandAst.ToString() | ForEach-Object {
     [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
   }
 }
@@ -66,11 +99,5 @@ Set-Alias -Name touch -Value Update-File
 Set-Alias -Name mkcd -Value Set-NewLocation
 Set-Alias -Name hack -Value Find-HistoryAllSessions
 Set-Alias -Name sudo -Value Start-ProcessAsAdmin
-<#
-  TODO: find how to make this work:
-    remapping cd from Set-Location to Set-CDPathLocation
-    breaks the argument completer for some reason ...
-#>
-# Set-Alias -Name cd -Value Set-CDPathLocation -Option AllScope
-Set-Alias -Name cdd -Value Set-CDPathLocation
+Set-Alias -Name cd -Value Set-CDPathLocation # -Option AllScope
 Set-Alias -Name pester -Value Invoke-PesterInCleanSession
