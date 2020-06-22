@@ -5,9 +5,20 @@
         cmd /c mklink /d ".\home\.windows-terminal" "..\windows-terminal"
 #>
 
-$configPath = (Get-Item "~\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState")
-$target = (Get-Item "~/.windows-terminal/profiles.json")
+$configPath = Get-Item '~\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState'
+$target = Get-Item '~/.windows-terminal/profiles.json'
 
-Write-Host "New-Item -ItemType HardLink -Path $configPath -Name $($target.Name) -Value $target" `
-    -ForegroundColor Yellow
+$ESC = [char]0x1B
+
+$color = @{
+  Error = "$ESC[0;91m"
+  Warning = "$ESC[0;93m"
+  Information = "$ESC[0;92m"
+  Off = "$ESC[0m"
+}
+
+Write-Output ('{0}{1}{2}' -f `
+  $color.Information,
+  "New-Item -ItemType HardLink -Path $configPath -Name $($target.Name) -Value $target",
+  $color.Off)
 New-Item -ItemType HardLink -Path $configPath -Name $target.Name -Value $target -Confirm -Force

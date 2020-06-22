@@ -34,10 +34,10 @@ function Get-TypeAssembly {
   # if nothing found then search based on Find-Type
   $matchingTypes = Find-Type -Pattern $TypeName
 
-  Write-Host "No types found exactly matching: '$TypeName'; $($matchingTypes.Count) partial matches found:`n"
+  Write-Output "No types found exactly matching: '$TypeName'; $($matchingTypes.Count) partial matches found:`n"
 
   for ($index = 0; $index -lt $matchingTypes.Count; $index++) {
-    Write-Host "$index`: $($matchingTypes[$index])"
+    Write-Output "$index`: $($matchingTypes[$index])"
   }
 
   $selected = Read-Host -Prompt "`nEnter selection [0-$($matchingTypes.Count)] default=0"

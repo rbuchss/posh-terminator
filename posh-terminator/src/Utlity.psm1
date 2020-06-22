@@ -1,5 +1,6 @@
 #!/usr/bin/env pwsh
 
+using namespace System.Diagnostics.CodeAnalysis
 using namespace System.Management.Automation
 using namespace System.Management.Automation.Internal
 
@@ -32,6 +33,8 @@ function Start-ProcessAsAdmin {
     DynamicParam { Get-BaseParameters -Base <Parent-Function> }
 #>
 function Get-BaseParameters {
+  [SuppressMessage('PSReviewUnusedParameter', 'Includes')]
+  [SuppressMessage('PSReviewUnusedParameter', 'Excludes')]
   param($Base, [string[]] $Includes, [string[]] $Excludes)
 
   $Base = Get-Command $Base
