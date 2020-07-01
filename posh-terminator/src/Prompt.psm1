@@ -18,6 +18,10 @@ $PromptStyle = @{
   CommandSymbolColor = [byte]186
   ErrorSymbol = [char]0x2718
   ErrorSymbolColor = [byte]9
+  DebugSymbol = '[DBG]'
+  DebugColor = [byte]5
+  NestedPromptSymbol = '>'
+  NestedPromptColor = [byte]5
 }
 
 $AdminPromptStyle = $PromptStyle.Clone()
@@ -56,6 +60,9 @@ function Test-IsAdministrator {
 function Format-Prompt {
   param([hashtable] $Style, [bool] $Success)
 
+  # TODO switch to Write-VcsStatus?
+  # GitPromptScriptBlock also has timing and WindowTitle stuff...
+
   "{0}{1}{2}{3}{4}{5} {6}{7}`n{8} " -f `
     (Format-ErrorPrompt -Style $Style -Success $Success),
     (Write-Prompt $Style.PoshSymbol -ForegroundColor $Style.PoshSymbolColor),
@@ -65,7 +72,7 @@ function Format-Prompt {
     (Write-Prompt $Style.HostName -ForegroundColor $Style.HostColor),
     (Write-Prompt (Get-CurrentPromptPath) -ForegroundColor $Style.PathColor),
     (& $GitPromptScriptBlock),
-    (Write-Prompt $Style.CommandSymbol -ForegroundColor $Style.CommandSymbolColor)
+    (Format-CommandSymbol -Style $Style)
 }
 
 function Format-ErrorPrompt {
@@ -76,6 +83,24 @@ function Format-ErrorPrompt {
   }
 
   '{0} ' -f (Write-Prompt $Style.ErrorSymbol -ForegroundColor $Style.ErrorSymbolColor)
+}
+
+function Format-CommandSymbol {
+  param([hashtable] $Style)
+
+  $suffix = if ((Test-Path Variable:/PSDebugContext) `
+      -or [runspace]::DefaultRunspace.Debugger.InBreakpoint) {
+    Write-Prompt $Style.DebugSymbol -ForegroundColor $Style.DebugColor
+  }
+
+  $suffix += if ($NestedPromptLevel -gt 0) {
+    '{0} ' -f (Write-Prompt ($Style.NestedPromptSymbol * $NestedPromptLevel) `
+      -ForegroundColor $Style.NestedPromptColor)
+  }
+
+  '{0}{1}' -f `
+    $suffix,
+    (Write-Prompt $Style.CommandSymbol -ForegroundColor $Style.CommandSymbolColor)
 }
 
 function Get-CurrentPromptPath {

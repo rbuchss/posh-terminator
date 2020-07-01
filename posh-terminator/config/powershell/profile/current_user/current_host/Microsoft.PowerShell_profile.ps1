@@ -37,6 +37,7 @@ $GitPromptSettings.LocalStagedStatusSymbol.Text = ''
 $GitPromptSettings.EnableStashStatus = $true
 $GitPromptSettings.DefaultPromptPrefix.Text = ''
 $GitPromptSettings.DefaultPromptPath.Text = ''
+$GitPromptSettings.DefaultPromptDebug.Text = ''
 $GitPromptSettings.DefaultPromptSuffix.Text = ''
 
 <#
