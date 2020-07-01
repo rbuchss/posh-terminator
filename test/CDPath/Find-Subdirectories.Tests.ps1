@@ -247,7 +247,7 @@ Describe 'CDPath' {
 
             It 'returns CompletionText' {
               $actual.CompletionText `
-                | Should -Be @('test/fixtures/no-space/')
+                | Should -Be @((Join-Path -Path 'test' -ChildPath 'fixtures' -AdditionalChildPath 'no-space', ''))
             }
 
             It 'returns ListItemText' {
@@ -318,7 +318,7 @@ Describe 'CDPath' {
 
             It 'returns CompletionText' {
               $actual.CompletionText `
-                | Should -Be @('test/fixtures/no-space/')
+                | Should -Be @((Join-Path -Path 'test' -ChildPath 'fixtures' -AdditionalChildPath 'no-space', ''))
             }
 
             It 'returns ListItemText' {
@@ -1055,7 +1055,11 @@ Describe 'CDPath' {
 
               It 'returns CompletionText' {
                 $actual.CompletionText `
-                  | Should -Be @('test/fixtures/', 'test/fixtures/no-space/', "'test/fixtures/has space/'")
+                  | Should -Be @(
+                    (Join-Path -Path 'test' -ChildPath 'fixtures' -AdditionalChildPath ''),
+                    (Join-Path -Path 'test' -ChildPath 'fixtures' -AdditionalChildPath 'no-space', ''),
+                    "'$(Join-Path -Path 'test' -ChildPath 'fixtures' -AdditionalChildPath 'has space', '')'"
+                  )
               }
 
               It 'returns ListItemText' {
@@ -1134,7 +1138,11 @@ Describe 'CDPath' {
 
               It 'returns CompletionText' {
                 $actual.CompletionText `
-                  | Should -Be @('test/fixtures/', 'test/fixtures/no-space/', "'test/fixtures/has space/'")
+                  | Should -Be @(
+                    (Join-Path -Path 'test' -ChildPath 'fixtures' -AdditionalChildPath ''),
+                    (Join-Path -Path 'test' -ChildPath 'fixtures' -AdditionalChildPath 'no-space', ''),
+                    "'$(Join-Path -Path 'test' -ChildPath 'fixtures' -AdditionalChildPath 'has space', '')'"
+                  )
               }
 
               It 'returns ListItemText' {
@@ -1443,7 +1451,7 @@ Describe 'CDPath' {
 
             It 'returns CompletionText' {
               $actual.CompletionText `
-                | Should -Be @('no-space/')
+                | Should -Be @((Join-Path -Path 'no-space' -ChildPath ''))
             }
 
             It 'returns ListItemText' {
@@ -1516,7 +1524,7 @@ Describe 'CDPath' {
 
             It 'returns CompletionText' {
               $actual.CompletionText `
-                | Should -Be @('no-space/')
+                | Should -Be @((Join-Path -Path 'no-space' -ChildPath ''))
             }
 
             It 'returns ListItemText' {
