@@ -71,6 +71,13 @@
                 "hidden": false,
                 "name": "PowerShell Core 6",
                 "source": "Windows.Terminal.PowershellCore"
+            },
+            {
+                "guid": "{92ec647f-b6e5-46d9-b82f-e2267d6e4433}",
+                "hidden": false,
+                "name": "git-bash",
+                "commandline" : "\"%USERPROFILE%\\scoop\\apps\\git\\current\\bin\\bash.exe\" --login -i -l",
+                "icon" : "%USERPROFILE%\\scoop\\apps\\git\\current\\usr\\share\\git\\git.ico"
             }
         ]
     },
