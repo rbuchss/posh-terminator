@@ -103,3 +103,34 @@ function ConvertTo-String {
 
   '@{{ {0} }}' -f ($array -join '; ')
 }
+
+function Get-HexDump {
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $Path,
+    [int] $Width = 10,
+    [int] $Total = -1
+  )
+
+  $OFS = ''
+  Get-Content -Path $Path -AsByteStream -ReadCount $Width | ForEach-Object { $index = 0 } {
+    if ($index -eq $Total) {
+      return
+    }
+
+    $record = $_
+    if (($record -eq 0).Count -ne $Width) {
+      $hex = $record | ForEach-Object { ' ' + ('{0:x}' -f $_).PadLeft(2, '0') }
+      $char = $record | ForEach-Object {
+        if ([char]::IsLetterOrDigit($_)) {
+          [char] $_
+        } else {
+          '.'
+        }
+      }
+      "$hex $char"
+    }
+    $index++
+  }
+}
