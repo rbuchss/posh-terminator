@@ -5,7 +5,7 @@
         cmd /c mklink /d ".\home\.windows-terminal" "..\windows-terminal"
 #>
 
-$configPath = Get-Item '~\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState'
+$configPath = Get-Item '~\AppData\Local\Packages\Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe\LocalState'
 $target = Get-Item '~/.posh-terminator/config/windows-terminal/settings.json'
 
 $ESC = [char]0x1B
