@@ -16,6 +16,8 @@
     "initialPosition": "0,0",
     "initialRows": 60,
 
+    "useTabSwitcher": "disabled",
+
     "profiles": {
         "defaults": {
             "closeOnExit": "graceful",
