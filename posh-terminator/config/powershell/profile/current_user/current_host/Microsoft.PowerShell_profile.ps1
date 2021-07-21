@@ -20,6 +20,9 @@ $env:CDPATH = if (Test-IsWindows) {
 # dotnet settings
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = $true
 
+# nvim settings
+$env:XDG_CONFIG_HOME = "$HOME/.config"
+
 # PoshGit settings
 $GitPromptSettings.BranchColor.ForegroundColor = [byte]69
 $GitPromptSettings.IndexColor.ForegroundColor = [byte]10
@@ -102,3 +105,4 @@ Set-Alias -Name hack -Value Find-HistoryAllSessions
 Set-Alias -Name sudo -Value Start-ProcessAsAdmin
 Set-Alias -Name cd -Value Set-CDPathLocation # -Option AllScope
 Set-Alias -Name pester -Value Invoke-PesterInCleanSession
+Set-Alias -Name vi -Value nvim
